@@ -244,9 +244,6 @@ class Main {
             
             console.log(_Main);
         }
-        for (const blob in _Main.finalBlobs){
-          _Main.contentImg.getContext('2d').putImageData(blob, 0, 0);
-        }
       });
     
       // this.videoInput.addEventListener('timeupdate', drawFrame, false);
@@ -272,7 +269,18 @@ class Main {
     }
 
     uploadVideo() {
-
+      console.log("UPLOAD VIDEO")
+      var input = document.createElement("input");
+      input.type = 'file';
+      // add onchange handler if you wish to get the file :)
+      input.click(); // opening dialog
+      input.onchange = function(e){
+        console.log(e);
+        _Main.videoInput.src = window.URL.createObjectURL(e.target.files[0]);
+        _Main.videoInput.controls = true;
+        _Main.videoInput.play();
+        _Main.extractFrames();
+      }
     }
 
     initializeStyleTransfer() {
