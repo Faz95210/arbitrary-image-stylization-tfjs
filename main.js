@@ -23,29 +23,13 @@ import links from './links';
 
 let _Main;
 
-HTMLCanvasElement.prototype.renderImage = function(blob){
-  
-  var ctx = this.getContext('2d');
-  var img = new Image();
-
-  img.onload = function(){
-    ctx.drawImage(img, 0, 0)
-  }
-console.log("Rendering blob ", blob);
-  img.src = URL.createObjectURL(blob);
-console.log("Rendering blob ", img.src);
-
-};
-
-
 /**
  * Main application to start on window load
  */
 class Main {
-  
     constructor() {
-      _Main = this;
-      this.finalBlobs = []
+        _Main = this;
+        this.finalBlobs = [];
         if (window.mobilecheck()) {
             document.getElementById('mobile-warning').hidden = false;
         }
@@ -143,144 +127,130 @@ class Main {
     }
 
     onVideoFail(e) {
-      console.log('webcam fail!', e);
+        console.log('webcam fail!', e);
     };
-  
+
     hasGetUserMedia() {
-      // Note: Opera is unprefixed.
-      return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
-                navigator.mozGetUserMedia || navigator.msGetUserMedia);
+        // Note: Opera is unprefixed.
+        return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia || navigator.msGetUserMedia);
     }
 
     initRecording() {
-      if (!_Main.hasGetUserMedia()){
-        alert('browser doesn\'t support getUserMedia');
-      }
-      navigator.getUserMedia({
-          video: true,
-          audio: false,
-      }, function(stream) {
-        _Main.videoInput.addEventListener('loadedmetadata', _Main.initCanvas, false);
-        _Main.videoInput.width = _Main.styleImg.width;
-        _Main.videoInput.height = _Main.styleImg.height;
-        _Main.videoInput.srcObject = stream;
-        _Main.stream = stream;
+        if (!_Main.hasGetUserMedia()) {
+            alert('browser doesn\'t support getUserMedia');
+        }
+        navigator.getUserMedia({
+            video: true,
+            audio: false,
+        }, function(stream) {
+            _Main.videoInput.addEventListener('loadedmetadata', _Main.initCanvas, false);
+            _Main.videoInput.width = _Main.styleImg.width;
+            _Main.videoInput.height = _Main.styleImg.height;
+            _Main.videoInput.srcObject = stream;
+            _Main.stream = stream;
 
-    
-        _Main.startRecording();
-      }, function(e) {console.error('webcam fail', e)});
+
+            _Main.startRecording();
+        }, function(e) {
+            console.error('webcam fail', e);
+        });
     }
 
     startRecording() {
-      _Main.finalBlobs = [];
-      let options = {mimeType: 'video/webm;codecs=vp9,opus'};
+        _Main.finalBlobs = [];
+        let options = {mimeType: 'video/webm;codecs=vp9,opus'};
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-          console.error(`${options.mimeType} is not supported`);
-          options = {mimeType: 'video/webm;codecs=vp8,opus'};
-          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
             console.error(`${options.mimeType} is not supported`);
-            options = {mimeType: 'video/webm'};
+            options = {mimeType: 'video/webm;codecs=vp8,opus'};
             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-              console.error(`${options.mimeType} is not supported`);
-              options = {mimeType: ''};
+                console.error(`${options.mimeType} is not supported`);
+                options = {mimeType: 'video/webm'};
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.error(`${options.mimeType} is not supported`);
+                    options = {mimeType: ''};
+                }
             }
-          }
         }
-      
+
         try {
-          _Main.mediaRecorder = new MediaRecorder(_Main.stream, options);
+            _Main.mediaRecorder = new MediaRecorder(_Main.stream, options);
         } catch (e) {
-          console.error('Exception while creating MediaRecorder:', e);
-          errorMsgElement.innerHTML = `Exception while creating MediaRecorder: ${JSON.stringify(e)}`;
-          return;
+            console.error('Exception while creating MediaRecorder:', e);
+            errorMsgElement.innerHTML = `Exception while creating MediaRecorder: ${JSON.stringify(e)}`;
+            return;
         }
 
         _Main.mediaRecorder.onstop = (event) => {
-          console.log('Recorder stopped: ', event);
-          console.log('Recorded Blobs: ', _Main.recording.length);
+            console.log('Recorder stopped: ', event);
+            console.log('Recorded Blobs: ', _Main.recording.length);
 
-          const superBuffer = new Blob(_Main.recording, {type: 'video/webm'});
-          _Main.videoInput.src = null;
-          _Main.videoInput.srcObject = null;
-          _Main.videoInput.src = window.URL.createObjectURL(superBuffer);
-          _Main.videoInput.controls = true;
-          _Main.videoInput.play();
-          this.extractFrames();
+            const superBuffer = new Blob(_Main.recording, {type: 'video/webm'});
+            _Main.videoInput.src = null;
+            _Main.videoInput.srcObject = null;
+            _Main.videoInput.src = window.URL.createObjectURL(superBuffer);
+            _Main.videoInput.controls = true;
+            _Main.videoInput.play();
+            this.extractFrames();
         };
-      
+
 
         _Main.recording = [];
         _Main.mediaRecorder.ondataavailable = _Main.handleDataAvailable;
 
-      _Main.mediaRecorder.start();
-      setTimeout(_Main.stopRecording, 2000);
+        _Main.mediaRecorder.start();
+        setTimeout(_Main.stopRecording, 2000);
     }
 
     stopRecording() {
-      _Main.mediaRecorder.stop();
+        _Main.mediaRecorder.stop();
     }
 
     handleDataAvailable(event) {
-      console.log('handleDataAvailable', event);
-      if (event.data && event.data.size > 0) {
-        _Main.recording.push(event.data);
-      }
+        console.log('handleDataAvailable', event);
+        if (event.data && event.data.size > 0) {
+            _Main.recording.push(event.data);
+        }
     }
 
-    
     async extractFrames() {
-      console.log('this.extractFrames');
-      this.initCanvas.width = this.videoInput.width;
-      this.initCanvas.height = this.videoInput.height;
-      
-      VideoToFrames.getFrames(_Main.videoInput.src, 30, VideoToFramesMethod.totalFrames).then(async function (frames) {
-        console.log(frames);
+        console.log('this.extractFrames');
+        this.initCanvas.width = this.videoInput.width;
+        this.initCanvas.height = this.videoInput.height;
 
-        for (const frame of frames){
-            _Main.contentImg.width = frame.width;
-            _Main.contentImg.height = frame.height;
-            _Main.contentImg.getContext('2d').putImageData(frame, 0, 0);
-            await _Main.startStyling();
-            
-            console.log(_Main);
-        }
-      });
-    
-      // this.videoInput.addEventListener('timeupdate', drawFrame, false);
-
-      // function drawFrame(e) {
-      //   //  this.pause();
-      //   if (!_Main.finalBlobs.includes(e.data)) {
-      //     _Main.finalBlobs.push(e.data);
-      //     _Main.ctx.drawImage(this, 0, 0);console.log(e);
-      //   }
-      // //   this.play();
-      // //   /* 
-      // //   this will save as a Blob, less memory consumptive than toDataURL
-      // //   a polyfill can be found at
-      // //   https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob#Polyfill
-      // //   */
-      // //   // canvas.toBlob(saveFrame, 'image/jpeg');
-      // //   // pro.innerHTML = ((this.currentTime / this.duration) * 100).toFixed(2) + ' %';
-      //   // if (this.currentTime < this.duration) {
-      //   //   this.play();
-      //   // }
-      // }
+        let video = new Whammy.Video(30);
+        console.log(`Extracting ${30 * _Main.videoInput.duration} Frames hopefully`, _Main.videoInput.duration);
+        VideoToFrames.getFrames(_Main.videoInput.src, 30 * _Main.videoInput.duration,
+            VideoToFramesMethod.totalFrames).then(async function(frames) {
+            console.log(`Number of frames : ${frames.length}`);
+            for (const frame of frames) {
+                _Main.contentImg.width = frame.width;
+                _Main.contentImg.height = frame.height;
+                _Main.contentImg.getContext('2d').putImageData(frame, 0, 0);
+                await _Main.startStyling();
+                video.add(_Main.stylized.getContext('2d'));
+            }
+            document.getElementById('videoOutput').src = webkitURL.createObjectURL(video.compile());
+            document.getElementById('videoOutput').play();
+        });
     }
 
     uploadVideo() {
-      console.log("UPLOAD VIDEO")
-      var input = document.createElement("input");
-      input.type = 'file';
-      // add onchange handler if you wish to get the file :)
-      input.click(); // opening dialog
-      input.onchange = function(e){
-        console.log(e);
-        _Main.videoInput.src = window.URL.createObjectURL(e.target.files[0]);
-        _Main.videoInput.controls = true;
-        _Main.videoInput.play();
-        _Main.extractFrames();
-      }
+        console.log('UPLOAD VIDEO');
+        const input = document.createElement('input');
+        input.type = 'file';
+        // add onchange handler if you wish to get the file :)
+        input.click(); // opening dialog
+        input.onchange = function(e) {
+            console.log(e);
+            _Main.videoInput.src = window.URL.createObjectURL(e.target.files[0]);
+            _Main.videoInput.controls = true;
+            _Main.videoInput.play();
+            _Main.videoInput.onplaying = function() {
+                _Main.extractFrames();
+                _Main.videoInput.onplaying = null;
+            };
+        };
     }
 
     initializeStyleTransfer() {
@@ -474,18 +444,17 @@ class Main {
     }
 
     async startStyling() {
-      console.log("SS Start");
-      await tf.nextFrame();
+        await tf.nextFrame();
         this.styleButton.textContent = 'Generating 100D style representation';
         await tf.nextFrame();
         let bottleneck = await tf.tidy(() => {
-                return this.styleNet.predict(tf.browser.fromPixels(this.styleImg).toFloat().div(tf.scalar(255)).expandDims());
+            return this.styleNet.predict(tf.browser.fromPixels(this.styleImg).toFloat().div(tf.scalar(255)).expandDims());
         });
         if (this.styleRatio !== 1.0) {
             this.styleButton.textContent = 'Generating 100D identity style representation';
             await tf.nextFrame();
             const identityBottleneck = await tf.tidy(() => {
-                    return this.styleNet.predict(tf.browser.fromPixels(this.contentImg).toFloat().div(tf.scalar(255)).expandDims());
+                return this.styleNet.predict(tf.browser.fromPixels(this.contentImg).toFloat().div(tf.scalar(255)).expandDims());
             });
             const styleBottleneck = bottleneck;
             bottleneck = await tf.tidy(() => {
@@ -503,13 +472,8 @@ class Main {
         });
         console.log(stylized);
         await tf.browser.toPixels(stylized, this.stylized);
-        this.stylized.toBlob(function (blob){
-          _Main.finalBlobs.push(blob);
-          console.log(_Main.finalBlobs)
-        });
         bottleneck.dispose();  // Might wanna keep this around
         stylized.dispose();
-        console.log("SS End");
     }
 
     async startCombining() {
