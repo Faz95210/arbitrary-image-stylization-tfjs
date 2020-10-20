@@ -191,7 +191,10 @@ class Main {
             _Main.videoInput.src = window.URL.createObjectURL(superBuffer);
             _Main.videoInput.controls = true;
             _Main.videoInput.play();
-            this.extractFrames();
+            _Main.videoInput.onplaying = function() {
+                _Main.extractFrames();
+                _Main.videoInput.onplaying = null;
+            };
         };
 
 
